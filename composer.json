@@ -1,0 +1,20 @@
+{
+    "name": "caichuanhai/session",
+    "description": "caichuanhai session lib",
+    "type": "library",
+    "require": {
+        "doctrine/cache": "^1.8"
+    },
+    "autoload": {
+        "psr-4": {
+          "caichuanhai\\Session\\": "src/"
+        }
+      },
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "caichuanhai",
+            "email": "caichuanhai123@qq.com"
+        }
+    ]
+}
