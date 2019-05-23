@@ -3,7 +3,7 @@
     "description": "caichuanhai session lib",
     "type": "library",
     "require": {
-        "doctrine/cache": "^1.8"
+        "phpfastcache/phpfastcache": "^7.0"
     },
     "autoload": {
         "psr-4": {
