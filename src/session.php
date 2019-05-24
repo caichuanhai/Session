@@ -1,7 +1,8 @@
 <?php
-namespace Caichuanhai\Session;
+namespace caichuanhai;
 
 use Phpfastcache\CacheManager;
+use Phpfastcache\Core\phpFastCache;
 
 /**
  * 自定义SESSION类
@@ -14,7 +15,6 @@ class Session
 	private $_config = array(
 		'session_name' => 'CCHSESSION',
 		'session_path' => '/',
-		'session_storage_prefix' => 'CCH_session_',
 		'session_match_ip' => false,
 		'session_expire' => 3600*24
 	);
@@ -99,36 +99,31 @@ class Session
 
 	/**
 	 * 设置驱动实例
-	 * @param string $driver 驱动类型，支持类型 file,redis,predis,memcache,memcached,mongodb,xcache,apc,cookie
+	 * @param string $driver 驱动类型，支持类型 files,redis,predis,memcache,memcached,mongodb,xcache,apc,cookie
 	 * @param Array $config 该驱动配置
 	 */
-	function setDriver($driver = 'file', $config = array())
+	function setDriver($driver = 'files', $config = array())
 	{
 		switch ($driver)
 		{
 			case 'redis':
-				use Phpfastcache\Drivers\Redis\Config;
-				$this->_driver = CacheManager::getInstance('redis', new Config($config));
+				$this->_driver = CacheManager::getInstance('redis', new \Phpfastcache\Drivers\Redis\Config($config));
 				break;
 
 			case 'predis':
-				use Phpfastcache\Drivers\Predis\Config;
-				$this->_driver = CacheManager::getInstance('Predis', new Config($config));
+				$this->_driver = CacheManager::getInstance('Predis', new \Phpfastcache\Drivers\Predis\Config($config));
 				break;
 
 			case 'memcache':
-				use Phpfastcache\Drivers\Memcache\Config;
-				$this->_driver = CacheManager::getInstance('memcache',new Config($config));
+				$this->_driver = CacheManager::getInstance('memcache',new \Phpfastcache\Drivers\Memcache\Config($config));
 				break;
 
 			case 'memcached':
-				use Phpfastcache\Drivers\Memcached\Config;
-				$this->_driver = CacheManager::getInstance('memcached', new Config($config));
+				$this->_driver = CacheManager::getInstance('memcached', new \Phpfastcache\Drivers\Memcached\Config($config));
 				break;
 
 			case 'mongodb':
-				use Phpfastcache\Drivers\Mongodb\Config;
-				$this->_driver = CacheManager::getInstance('mongodb', new Config($config));
+				$this->_driver = CacheManager::getInstance('mongodb', new \Phpfastcache\Drivers\Mongodb\Config($config));
 				break;
 
 			case 'xcache':
@@ -144,9 +139,7 @@ class Session
 				break;
 			
 			default:
-				use Phpfastcache\Config\Config;
-				use Phpfastcache\Core\phpFastCache;
-				CacheManager::setDefaultConfig(new Config([
+				CacheManager::setDefaultConfig(new \Phpfastcache\Config\Config([
 					"path" => sys_get_temp_dir(),
 					"itemDetailedDate" => false
 				]));
@@ -164,12 +157,11 @@ class Session
 	private function _setSessionId()
 	{
 		/*判断客户端是否有session_id*/
-		$sessionName = $this->_getCookie($this->getConfig('session_name'));
-		if($sessionName)
+		$sessionId = $this->_getCookie($this->getConfig('session_name'));
+		if($sessionId)
 		{
 			/*客户端已存在session_name，直接获取SESSION ID并验证正确性*/
-			$sessionId = $this->_getSessionIdFromName($sessionName);
-			$sessionData = $this->_getDataFromSessionId($sessionId);
+			$sessionData = $this->_getDataViaSessionId($sessionId);
 
 			$match = $this->_match_ip($sessionData);
 			if($match)
@@ -182,12 +174,12 @@ class Session
 		if($this->_sessionId == null)
 		{
 			/*新生成sessionId*/
-			$this->_sessionId = $this->_getSessionIdFromName();
+			$this->_sessionId = $this->_getSessionIdViaName();
 			$this->_data['sys'] = array('ip' => $this->_getIp());
 		}
 
 		/*生成cookie*/
-		$this->_setCookie($this->getConfig('session_name'), $this->_sessionId, $this->getConfig('session_expire')+time())
+		$this->_setCookie($this->getConfig('session_name'), $this->_sessionId, $this->getConfig('session_expire')+time(), $this->_sessionId, $this->getConfig('session_path'));
 	}
 
 	/**
@@ -195,11 +187,11 @@ class Session
 	 * @param  string $name sessionName
 	 * @return string sessionId
 	 */
-	private function _getSessionIdFromName($name = '')
+	private function _getSessionIdViaName($name = '')
 	{
 		$name = $name ? $name : md5(uniqid(microtime(true),true));
 
-		return $this->getConfig('session_storage_prefix').$name;
+		return 'CCH_session_'.$name;
 	}
 
 	/**
@@ -207,7 +199,7 @@ class Session
 	 * @param  string $sessionId sessionId
 	 * @return [type]            [description]
 	 */
-	private function _getDataFromSessionId($sessionId)
+	private function _getDataViaSessionId($sessionId)
 	{
 		$cache = $this->_driver->getItem($sessionId);
 
@@ -267,7 +259,7 @@ class Session
 	 */
 	private function _setCookie($name, $value = "", $expire = 0, $path = "", $domain = "", $secure = false, $httponly = false)
 	{
-		return setcookie(func_get_args());
+		return setcookie(...func_get_args());
 	}
 
 	private function _getIp()
@@ -289,7 +281,7 @@ class Session
 	{
 		$cache = $this->_driver->getItem($this->_sessionId);
 
-		$cache->set($this->_data)->expiresAfter($this->getConfig['session_expire']);
+		$cache->set($this->_data)->expiresAfter($this->getConfig('session_expire'));
 
 		$this->_driver->save($cache);
 	}
