@@ -158,7 +158,6 @@ class Session
 	{
 		/*判断客户端是否有session_id*/
 		$sessionId = $this->_getCookie($this->getConfig('session_name'));
-		echo $sessionId;
 		if($sessionId)
 		{
 			/*客户端已存在session_name，直接获取SESSION ID并验证正确性*/
