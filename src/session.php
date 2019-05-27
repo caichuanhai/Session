@@ -158,6 +158,7 @@ class Session
 	{
 		/*判断客户端是否有session_id*/
 		$sessionId = $this->_getCookie($this->getConfig('session_name'));
+		echo $sessionId;
 		if($sessionId)
 		{
 			/*客户端已存在session_name，直接获取SESSION ID并验证正确性*/
@@ -174,24 +175,21 @@ class Session
 		if($this->_sessionId == null)
 		{
 			/*新生成sessionId*/
-			$this->_sessionId = $this->_getSessionIdViaName();
+			$this->_sessionId = $this->_randomSessionId();
 			$this->_data['sys'] = array('ip' => $this->_getIp());
 		}
 
 		/*生成cookie*/
-		$this->_setCookie($this->getConfig('session_name'), $this->_sessionId, $this->getConfig('session_expire')+time(), $this->_sessionId, $this->getConfig('session_path'));
+		$this->_setCookie($this->getConfig('session_name'), $this->_sessionId, $this->getConfig('session_expire')+time(), $this->getConfig('session_path'));
 	}
 
 	/**
-	 * 通过sessionName获取sessionId
-	 * @param  string $name sessionName
+	 * 随机生成sessionId
 	 * @return string sessionId
 	 */
-	private function _getSessionIdViaName($name = '')
+	private function _randomSessionId()
 	{
-		$name = $name ? $name : md5(uniqid(microtime(true),true));
-
-		return 'CCH_session_'.$name;
+		return 'CCH_session_'.md5(uniqid(microtime(true),true));
 	}
 
 	/**
